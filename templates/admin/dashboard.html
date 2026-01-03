@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Trio Snacks{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Admin Dashboard</h1>
+        <div class="admin-nav">
+            <a href="{{ url_for('admin_products') }}" class="btn btn-primary">Manage Products</a>
+            <a href="{{ url_for('admin_offers') }}" class="btn btn-primary">Manage Offers</a>
+            <a href="{{ url_for('admin_settings') }}" class="btn btn-secondary">Settings</a>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Total Products</h3>
+            <p class="stat-value">{{ total_products }}</p>
+        </div>
+        <div class="stat-card success">
+            <h3>Today's Sales</h3>
+            <p class="stat-value">₹{{ "%.2f"|format(today_sales) }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Today's Orders</h3>
+            <p class="stat-value">{{ today_orders_count }}</p>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="dashboard-card">
+            <h2>Top Selling Items (Today)</h2>
+            {% if top_items %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Quantity Sold</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in top_items %}
+                    <tr>
+                        <td>{{ item[0] }}</td>
+                        <td>{{ item[1] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+                <p class="no-data">No sales data available for today.</p>
+            {% endif %}
+        </div>
+
+        <div class="dashboard-card">
+            <h2>Recent Orders</h2>
+            {% if recent_orders %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Invoice #</th>
+                        <th>Time</th>
+                        <th>Total</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in recent_orders %}
+                    <tr>
+                        <td>{{ order.invoice_number }}</td>
+                        <td>{{ order.created_at.strftime('%H:%M') }}</td>
+                        <td>₹{{ "%.2f"|format(order.total_amount) }}</td>
+                        <td><a href="{{ url_for('order_detail', order_id=order.id) }}" class="btn btn-sm btn-primary">View</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+                <p class="no-data">No recent orders.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

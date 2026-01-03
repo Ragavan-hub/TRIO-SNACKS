@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Home - {{ shop_name }}{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="container">
+        {% if shop_logo %}
+            <div class="logo-container">
+                <img src="{{ url_for('static', filename='images/' + shop_logo) }}" alt="{{ shop_name }} Logo" class="shop-logo">
+            </div>
+        {% endif %}
+        <h1 class="hero-title">{{ shop_name }}</h1>
+        <p class="hero-tagline">Fresh Snacks, Every Day!</p>
+        <div class="hero-cta">
+            <a href="{{ url_for('menu') }}" class="btn btn-primary">View Menu</a>
+            {% if not session.user_id %}
+                <a href="{{ url_for('login') }}" class="btn btn-secondary">Staff Login</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <section class="offers-section">
+        <h2 class="section-title">Special Offers</h2>
+        <div class="offers-grid">
+            {% if offers %}
+                {% for offer in offers %}
+                <div class="offer-card">
+                    <h3>{{ offer.title }}</h3>
+                    <p>{{ offer.description }}</p>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="offer-card">
+                    <h3>Buy 2 Get 1 Free</h3>
+                    <p>On selected chips and snacks</p>
+                </div>
+                <div class="offer-card">
+                    <h3>Weekend Special</h3>
+                    <p>20% off on all bakery items</p>
+                </div>
+                <div class="offer-card">
+                    <h3>Happy Hours</h3>
+                    <p>10% discount on snacks (7 PM - 9 PM)</p>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="popular-section">
+        <h2 class="section-title">Popular Snacks</h2>
+        <div class="products-grid">
+            {% for product in popular_products %}
+            <div class="product-card">
+                {% if product.image_url %}
+                    <img src="{{ url_for('static', filename='images/products/' + product.image_url) }}" alt="{{ product.name }}" class="product-image">
+                {% else %}
+                    <div class="product-image-placeholder">{{ product.name[0] }}</div>
+                {% endif %}
+                <div class="product-info">
+                    <h3 class="product-name">{{ product.name }}</h3>
+                    <p class="product-category">{{ product.category|title }}</p>
+                    <p class="product-price">₹{{ "%.2f"|format(product.price) }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% if not popular_products %}
+            <p class="no-products">No products available yet. Check back soon!</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}
+

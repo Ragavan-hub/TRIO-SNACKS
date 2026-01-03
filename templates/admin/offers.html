@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Offers - Trio Snacks{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Manage Special Offers</h1>
+        <div>
+            <button class="btn btn-primary" onclick="showAddOfferModal()">Add New Offer</button>
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+    </div>
+
+    <div class="offers-table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Order</th>
+                    <th>Title</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for offer in offers %}
+                <tr>
+                    <td>{{ offer.display_order }}</td>
+                    <td><strong>{{ offer.title }}</strong></td>
+                    <td>{{ offer.description }}</td>
+                    <td>
+                        {% if offer.is_active %}
+                            <span class="badge success">Active</span>
+                        {% else %}
+                            <span class="badge danger">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="showEditOfferModal({{ offer.id }}, {{ offer.title|tojson }}, {{ offer.description|tojson }}, {{ offer.display_order }}, {{ offer.is_active|lower }})">Edit</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteOffer({{ offer.id }})">Delete</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if not offers %}
+            <p class="no-data">No offers added yet. Click "Add New Offer" to create one.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add/Edit Offer Modal -->
+<div id="offer-modal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeOfferModal()">&times;</span>
+        <h2 id="modal-title">Add Offer</h2>
+        <form id="offer-form" method="POST">
+            <div class="form-group">
+                <label for="offer-title">Offer Title *</label>
+                <input type="text" id="offer-title" name="title" required placeholder="e.g., Buy 2 Get 1 Free">
+            </div>
+            <div class="form-group">
+                <label for="offer-description">Description *</label>
+                <textarea id="offer-description" name="description" rows="3" required placeholder="e.g., On selected chips and snacks"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="offer-order">Display Order</label>
+                <input type="number" id="offer-order" name="display_order" min="0" value="0">
+                <small>Lower numbers appear first (0 = first)</small>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="offer-active" name="is_active" checked>
+                    Active (Show on home page)
+                </label>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save</button>
+                <button type="button" class="btn btn-secondary" onclick="closeOfferModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function showAddOfferModal() {
+    const modal = document.getElementById('offer-modal');
+    const form = document.getElementById('offer-form');
+    const title = document.getElementById('modal-title');
+    
+    title.textContent = 'Add Offer';
+    form.action = '/admin/offers/add';
+    form.method = 'POST';
+    form.reset();
+    document.getElementById('offer-active').checked = true;
+    
+    modal.style.display = 'block';
+}
+
+function showEditOfferModal(id, title, description, order, isActive) {
+    const modal = document.getElementById('offer-modal');
+    const form = document.getElementById('offer-form');
+    const modalTitle = document.getElementById('modal-title');
+    
+    modalTitle.textContent = 'Edit Offer';
+    form.action = `/admin/offers/${id}/edit`;
+    form.method = 'POST';
+    
+    document.getElementById('offer-title').value = title;
+    document.getElementById('offer-description').value = description;
+    document.getElementById('offer-order').value = order;
+    document.getElementById('offer-active').checked = isActive === 'true' || isActive === true;
+    
+    modal.style.display = 'block';
+}
+
+function closeOfferModal() {
+    const modal = document.getElementById('offer-modal');
+    modal.style.display = 'none';
+}
+
+function deleteOffer(offerId) {
+    if (!confirm('Are you sure you want to delete this offer?')) {
+        return;
+    }
+    
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/admin/offers/${offerId}/delete`;
+    document.body.appendChild(form);
+    form.submit();
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('offer-modal');
+    if (event.target === modal) {
+        closeOfferModal();
+    }
+}
+</script>
+{% endblock %}
+

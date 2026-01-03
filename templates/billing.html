@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Billing - Trio Snacks{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/billing.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dark-mode.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="billing-container">
+    <div class="billing-header">
+        <h1>Billing / POS</h1>
+        <div class="billing-controls">
+            <button id="dark-mode-toggle" class="btn btn-icon" title="Toggle Dark Mode">🌙</button>
+            <button id="language-toggle" class="btn btn-icon" title="Toggle Language">🌐</button>
+        </div>
+    </div>
+
+    <div class="billing-layout">
+        <!-- Left Panel: Product Selection -->
+        <div class="products-panel">
+            <div class="panel-header">
+                <h2 data-i18n="products">Products</h2>
+            </div>
+            <div class="product-filters">
+                <div class="search-box">
+                    <input type="text" id="product-search" placeholder="Search products..." autofocus>
+                    <button onclick="searchProducts()">Search</button>
+                </div>
+                <div class="category-filters">
+                    <button class="category-btn active" data-category="all" onclick="filterByCategory('all')">All</button>
+                    {% for category in categories %}
+                        <button class="category-btn" data-category="{{ category }}" onclick="filterByCategory('{{ category }}')">{{ category|title }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="products-list" id="products-list">
+                {% for product in products %}
+                <div class="product-item" data-product-id="{{ product.id }}" data-category="{{ product.category }}">
+                    <div class="product-item-image">
+                        {% if product.image_url %}
+                            <img src="{{ url_for('static', filename='images/products/' + product.image_url) }}" alt="{{ product.name }}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Crect fill=\'%23ddd\' width=\'100\' height=\'100\'/%3E%3Ctext fill=\'%23999\' font-family=\'sans-serif\' font-size=\'50\' dy=\'0.35em\' x=\'50%25\' y=\'50%25\' text-anchor=\'middle\'%3E{{ product.name[0] }}%3C/text%3E%3C/svg%3E'">
+                        {% else %}
+                            <div class="product-image-placeholder-small">{{ product.name[0] }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="product-item-info">
+                        <h4>{{ product.name }}</h4>
+                        <p class="product-category">{{ product.category|title }}</p>
+                    </div>
+                    <div class="product-item-actions">
+                        <span class="product-price">₹{{ "%.2f"|format(product.price) }}</span>
+                        <button class="btn btn-sm btn-primary" onclick="addToCart({{ product.id }})">Add</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Right Panel: Cart & Checkout -->
+        <div class="cart-panel">
+            <div class="panel-header">
+                <h2 data-i18n="cart">Cart</h2>
+                <button class="btn btn-sm btn-danger" onclick="clearCart()" data-i18n="clear">Clear</button>
+            </div>
+            <div class="cart-items" id="cart-items">
+                <p class="empty-cart" data-i18n="cart_empty">Cart is empty</p>
+            </div>
+            <div class="cart-summary">
+                <div class="summary-row">
+                    <span data-i18n="subtotal">Subtotal:</span>
+                    <span id="subtotal">₹0.00</span>
+                </div>
+                <div class="summary-row">
+                    <label data-i18n="discount">Discount:</label>
+                    <input type="number" id="discount-input" min="0" step="0.01" value="0" onchange="calculateTotal()">
+                </div>
+                <div class="summary-row total-row">
+                    <span data-i18n="total">Total:</span>
+                    <span id="total-amount">₹0.00</span>
+                </div>
+            </div>
+            <div class="checkout-actions">
+                <button class="btn btn-primary btn-large" onclick="processOrder()" data-i18n="process_order">Process Order</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/billing.js') }}"></script>
+<script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+<script>
+    window.taxRate = 0; // Tax removed
+    let currentCategory = 'all';
+    
+    // Initialize
+    loadCart();
+    initI18n();
+    initDarkMode();
+    initBilling();
+</script>
+{% endblock %}
+

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Order Details - {{ order.invoice_number }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Order Details</h1>
+        <a href="{{ url_for('orders') }}" class="btn btn-secondary">Back to Orders</a>
+    </div>
+
+    <div class="order-detail-card">
+        <div class="order-header">
+            <div>
+                <h2>Invoice #{{ order.invoice_number }}</h2>
+                <p class="order-date">{{ order.created_at.strftime('%d %B %Y, %I:%M %p') }}</p>
+            </div>
+            <div>
+                <a href="{{ url_for('invoice_pdf', order_id=order.id) }}" class="btn btn-primary">Download PDF</a>
+            </div>
+        </div>
+
+        {% if order.customer_name or order.customer_phone %}
+        <div class="customer-section">
+            <h3>Customer Details</h3>
+            {% if order.customer_name %}
+                <p><strong>Name:</strong> {{ order.customer_name }}</p>
+            {% endif %}
+            {% if order.customer_phone %}
+                <p><strong>Phone:</strong> {{ order.customer_phone }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="items-section">
+            <h3>Items</h3>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>S.No</th>
+                        <th>Item</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ item.product.name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>₹{{ "%.2f"|format(item.unit_price) }}</td>
+                        <td>₹{{ "%.2f"|format(item.total_price) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="totals-section">
+            <div class="total-row">
+                <span>Subtotal:</span>
+                <span>₹{{ "%.2f"|format(order.subtotal) }}</span>
+            </div>
+            {% if order.tax_amount > 0 %}
+            <div class="total-row">
+                <span>Tax:</span>
+                <span>₹{{ "%.2f"|format(order.tax_amount) }}</span>
+            </div>
+            {% endif %}
+            {% if order.discount_amount > 0 %}
+            <div class="total-row">
+                <span>Discount:</span>
+                <span>-₹{{ "%.2f"|format(order.discount_amount) }}</span>
+            </div>
+            {% endif %}
+            <div class="total-row final-total">
+                <span>Total Amount:</span>
+                <span>₹{{ "%.2f"|format(order.total_amount) }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

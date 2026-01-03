@@ -1,0 +1,98 @@
+/* Dark Mode Styles */
+
+body.dark-mode {
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+}
+
+body.dark-mode .navbar {
+    background-color: #2d2d2d;
+}
+
+body.dark-mode .product-card,
+body.dark-mode .offer-card,
+body.dark-mode .summary-card,
+body.dark-mode .stat-card,
+body.dark-mode .dashboard-card,
+body.dark-mode .login-box,
+body.dark-mode .products-panel,
+body.dark-mode .cart-panel,
+body.dark-mode .settings-card,
+body.dark-mode .order-detail-card {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+}
+
+body.dark-mode .data-table {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+}
+
+body.dark-mode .data-table thead {
+    background-color: #3d3d3d;
+}
+
+body.dark-mode .data-table tbody tr {
+    border-bottom-color: #404040;
+}
+
+body.dark-mode .data-table tbody tr:hover {
+    background-color: #353535;
+}
+
+body.dark-mode .form-group input,
+body.dark-mode .form-group select,
+body.dark-mode .form-group textarea,
+body.dark-mode .search-box input {
+    background-color: #353535;
+    border-color: #404040;
+    color: #e0e0e0;
+}
+
+body.dark-mode .form-group input:focus,
+body.dark-mode .form-group select:focus,
+body.dark-mode .form-group textarea:focus {
+    border-color: var(--primary-color);
+}
+
+body.dark-mode .product-item,
+body.dark-mode .cart-item {
+    border-color: #404040;
+    background-color: #2d2d2d;
+}
+
+body.dark-mode .product-item:hover,
+body.dark-mode .cart-item:hover {
+    background-color: #353535;
+}
+
+body.dark-mode .cart-summary {
+    background-color: #252525;
+    border-top-color: #404040;
+}
+
+body.dark-mode .summary-row.total-row {
+    border-top-color: var(--primary-color);
+}
+
+body.dark-mode .modal-content {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+}
+
+body.dark-mode .close {
+    color: #aaa;
+}
+
+body.dark-mode .close:hover {
+    color: #e0e0e0;
+}
+
+body.dark-mode .text-muted {
+    color: #999;
+}
+
+body.dark-mode .empty-cart {
+    color: #666;
+}
+

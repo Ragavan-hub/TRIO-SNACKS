@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Menu - Trio Snacks{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Our Menu</h1>
+        <p>Browse our delicious selection of snacks</p>
+    </div>
+
+    <div class="menu-filters">
+        <div class="search-box">
+            <input type="text" id="search-input" placeholder="Search snacks..." value="{{ search_query }}">
+            <button onclick="searchProducts()">Search</button>
+        </div>
+        <div class="category-filters">
+            <a href="{{ url_for('menu', category='all') }}" class="category-btn {% if current_category == 'all' %}active{% endif %}">All</a>
+            {% for category in categories %}
+                <a href="{{ url_for('menu', category=category) }}" class="category-btn {% if current_category == category %}active{% endif %}">{{ category|title }}</a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="products-grid">
+        {% for product in products %}
+        <div class="product-card">
+            {% if product.image_url %}
+                <img src="{{ url_for('static', filename='images/products/' + product.image_url) }}" alt="{{ product.name }}" class="product-image">
+            {% else %}
+                <div class="product-image-placeholder">{{ product.name[0] }}</div>
+            {% endif %}
+            <div class="product-info">
+                <h3 class="product-name">{{ product.name }}</h3>
+                <p class="product-category">{{ product.category|title }}</p>
+                {% if product.description %}
+                    <p class="product-description">{{ product.description }}</p>
+                {% endif %}
+                <div class="product-footer">
+                    <p class="product-price">₹{{ "%.2f"|format(product.price) }}</p>
+                    {% if product.stock_quantity > 0 %}
+                        <span class="stock-badge in-stock">In Stock</span>
+                    {% else %}
+                        <span class="stock-badge out-of-stock">Out of Stock</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if not products %}
+        <div class="no-products">
+            <p>No products found. Try a different search or category.</p>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+function searchProducts() {
+    const search = document.getElementById('search-input').value;
+    const category = '{{ current_category }}';
+    window.location.href = `{{ url_for('menu') }}?category=${category}&search=${encodeURIComponent(search)}`;
+}
+
+document.getElementById('search-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        searchProducts();
+    }
+});
+</script>
+{% endblock %}
+
