@@ -19,52 +19,92 @@ app.config.from_object(Config)
 db.init_app(app)
 
 # Create upload folder if it doesn't exist
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+try:
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+except:
+    pass  # May fail in serverless, handled per request
 
 # Initialize database tables
-with app.app_context():
-    db.create_all()
-    
-    # Create default admin user if not exists
-    if not User.query.filter_by(username='admin').first():
-        admin = User(username='admin', role='admin')
-        admin.set_password('admin123')
-        db.session.add(admin)
-        db.session.commit()
-    
-    # Initialize default settings
-    default_settings = {
-        'shop_name': 'Trio Snacks',
-        'shop_address': '123 Main Street, City',
-        'shop_phone': '+91 9876543210',
-        'tax_rate': '5.0',
-        'gst_rate': '0.0',
-        'stock_alert_threshold': '10',
-        'invoice_footer': 'Thank you for your business!'
-    }
-    
-    for key, value in default_settings.items():
-        if not Setting.query.filter_by(key=key).first():
-            setting = Setting(key=key, value=value)
-            db.session.add(setting)
-    
-    # Initialize default offers if none exist
-    if Offer.query.count() == 0:
-        default_offers = [
-            {'title': 'Buy 2 Get 1 Free', 'description': 'On selected chips and snacks', 'order': 0},
-            {'title': 'Weekend Special', 'description': '20% off on all bakery items', 'order': 1},
-            {'title': 'Happy Hours', 'description': '10% discount on snacks (7 PM - 9 PM)', 'order': 2}
-        ]
-        for offer_data in default_offers:
-            offer = Offer(
-                title=offer_data['title'],
-                description=offer_data['description'],
-                display_order=offer_data['order'],
-                is_active=True
-            )
-            db.session.add(offer)
-    
-    db.session.commit()
+def init_db():
+    """Initialize database with default data"""
+    try:
+        with app.app_context():
+            # Create tables
+            db.create_all()
+            
+            # Create default admin user if not exists
+            try:
+                if not User.query.filter_by(username='admin').first():
+                    admin = User(username='admin', role='admin')
+                    admin.set_password('admin123')
+                    db.session.add(admin)
+                    db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                print(f"Error creating admin user: {e}")
+            
+            # Initialize default settings
+            try:
+                default_settings = {
+                    'shop_name': 'Trio Snacks',
+                    'shop_address': '123 Main Street, City',
+                    'shop_phone': '+91 9876543210',
+                    'tax_rate': '5.0',
+                    'gst_rate': '0.0',
+                    'stock_alert_threshold': '10',
+                    'invoice_footer': 'Thank you for your business!'
+                }
+                
+                for key, value in default_settings.items():
+                    if not Setting.query.filter_by(key=key).first():
+                        setting = Setting(key=key, value=value)
+                        db.session.add(setting)
+                
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                print(f"Error creating settings: {e}")
+            
+            # Initialize default offers if none exist
+            try:
+                if Offer.query.count() == 0:
+                    default_offers = [
+                        {'title': 'Buy 2 Get 1 Free', 'description': 'On selected chips and snacks', 'order': 0},
+                        {'title': 'Weekend Special', 'description': '20% off on all bakery items', 'order': 1},
+                        {'title': 'Happy Hours', 'description': '10% discount on snacks (7 PM - 9 PM)', 'order': 2}
+                    ]
+                    for offer_data in default_offers:
+                        offer = Offer(
+                            title=offer_data['title'],
+                            description=offer_data['description'],
+                            display_order=offer_data['order'],
+                            is_active=True
+                        )
+                        db.session.add(offer)
+                    
+                    db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                print(f"Error creating offers: {e}")
+                
+    except Exception as e:
+        # Log error but don't crash
+        print(f"Database initialization error: {e}")
+        import traceback
+        traceback.print_exc()
+
+# Initialize database (only if not in Vercel, otherwise lazy init)
+if not os.environ.get('VERCEL'):
+    init_db()
+else:
+    # For Vercel, initialize on first request
+    @app.before_request
+    def ensure_db_initialized():
+        try:
+            with app.app_context():
+                db.create_all()
+        except:
+            pass
 
 
 # ==================== Public Routes ====================
@@ -538,14 +578,22 @@ def admin_products_add():
     if 'image' in request.files:
         file = request.files['image']
         if file and file.filename:
-            # Secure filename and save
-            filename = secure_filename(file.filename)
-            # Add timestamp to make unique
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_')
-            filename = timestamp + filename
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
-            image_url = filename
+            try:
+                # Secure filename and save
+                filename = secure_filename(file.filename)
+                # Add timestamp to make unique
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_')
+                filename = timestamp + filename
+                upload_dir = app.config['UPLOAD_FOLDER']
+                os.makedirs(upload_dir, exist_ok=True)
+                filepath = os.path.join(upload_dir, filename)
+                file.save(filepath)
+                image_url = filename
+            except Exception as e:
+                # In serverless, file may not persist, but store filename
+                filename = secure_filename(file.filename)
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_')
+                image_url = timestamp + filename
     
     product = Product(
         name=name,
@@ -690,18 +738,37 @@ def admin_settings_update():
             # Delete old logo if exists
             old_logo_setting = Setting.query.filter_by(key='shop_logo').first()
             if old_logo_setting and old_logo_setting.value:
-                old_logo_path = os.path.join('static/images', old_logo_setting.value)
-                if os.path.exists(old_logo_path):
-                    os.remove(old_logo_path)
+                try:
+                    old_logo_path = os.path.join('static/images', old_logo_setting.value)
+                    if os.path.exists(old_logo_path):
+                        os.remove(old_logo_path)
+                except:
+                    pass  # Ignore errors in serverless
             
             # Save new logo
-            filename = secure_filename(file.filename)
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_')
-            filename = timestamp + filename
-            logo_dir = 'static/images'
-            os.makedirs(logo_dir, exist_ok=True)
-            filepath = os.path.join(logo_dir, filename)
-            file.save(filepath)
+            try:
+                filename = secure_filename(file.filename)
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_')
+                filename = timestamp + filename
+                logo_dir = 'static/images'
+                os.makedirs(logo_dir, exist_ok=True)
+                filepath = os.path.join(logo_dir, filename)
+                file.save(filepath)
+            except Exception as e:
+                # In serverless, try /tmp
+                try:
+                    filename = secure_filename(file.filename)
+                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_')
+                    filename = timestamp + filename
+                    logo_dir = '/tmp/static/images'
+                    os.makedirs(logo_dir, exist_ok=True)
+                    filepath = os.path.join(logo_dir, filename)
+                    file.save(filepath)
+                except:
+                    # Store filename anyway
+                    filename = secure_filename(file.filename)
+                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_')
+                    filename = timestamp + filename
             
             # Update setting
             logo_setting = Setting.query.filter_by(key='shop_logo').first()

@@ -8,14 +8,23 @@ class Config:
     """Base configuration class"""
     # Flask settings
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///database.db'
+    # Use environment variable for database or default to local file
+    # For Vercel, use /tmp for writable database location
+    if os.environ.get('VERCEL'):
+        SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:////tmp/database.db'
+    else:
+        SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///database.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Session settings
     PERMANENT_SESSION_LIFETIME = timedelta(hours=8)
     
     # Application settings
-    UPLOAD_FOLDER = 'static/images/products'
+    # For Vercel, use /tmp for uploads (writable location)
+    if os.environ.get('VERCEL'):
+        UPLOAD_FOLDER = '/tmp/static/images/products'
+    else:
+        UPLOAD_FOLDER = 'static/images/products'
     MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # 5MB
     
     # Default settings
